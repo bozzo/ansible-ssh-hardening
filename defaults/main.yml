@@ -256,3 +256,6 @@ sshd_syslog_facility: 'AUTH'
 sshd_log_level: 'VERBOSE'
 
 sshd_strict_modes: yes
+
+# Reboot timeout for ostree based OS
+reboot_timeout: 180

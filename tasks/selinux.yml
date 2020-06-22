@@ -1,8 +1,25 @@
 ---
+- name: check if booted with ostree
+  stat:
+    path: /run/ostree-booted
+  register: ostree
+
 - name: install selinux dependencies when selinux is installed
   package:
     name: '{{ ssh_selinux_packages }}'
     state: present
+  when: not ostree.stat.exists
+
+- name: install selinux dependencies when selinux is installed (rpm-ostree)
+  command: rpm-ostree install --idempotent {{ ssh_selinux_packages | join(' ') }}
+  register: rpm_ostree_result
+  changed_when: rpm_ostree_result.stdout.find('No change.') == -1
+  when: ostree.stat.exists
+  
+- name: reboot when dependencies are installed (rpm-ostree)
+  reboot:
+    reboot_timeout: "{{ reboot_timeout | default(180) }}"
+  when: ostree.stat.exists and rpm_ostree_result.stdout.find('No change.') == -1
 
 - name: authorize {{ ssh_server_ports }} ports for selinux
   seport:
